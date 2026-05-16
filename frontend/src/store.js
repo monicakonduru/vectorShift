@@ -8,7 +8,8 @@ import {
     MarkerType,
   } from 'reactflow';
 import { variableHandleId, findVariableProviders } from './pipeline/variableEdges';
-import { parseTemplateVariables, isValidJsIdentifier } from './nodes/parseTemplateVariables';
+import { parseTemplateVariables } from './nodes/parseTemplateVariables';
+import { resolveInputHandleId } from './nodes/nodeEffects';
 
 const EDGE_DEFAULTS = {
   type: 'smoothstep',
@@ -45,6 +46,16 @@ export const useStore = create((set, get) => ({
         if (node.type === 'customInput' || node.type === 'text') {
           queueMicrotask(() => get().resyncAllTextVariableEdges());
         }
+    },
+    deleteNode: (nodeId) => {
+      const { nodes, edges } = get();
+      set({
+        nodes: nodes.filter((node) => node.id !== nodeId),
+        edges: edges.filter(
+          (edge) => edge.source !== nodeId && edge.target !== nodeId
+        ),
+      });
+      queueMicrotask(() => get().resyncAllTextVariableEdges());
     },
     onNodesChange: (changes) => {
       set({
@@ -114,8 +125,12 @@ export const useStore = create((set, get) => ({
       const nextEdges = edges.filter((edge) => {
         const provider = nodes.find((node) => node.id === edge.source);
         if (provider?.type !== 'customInput') return true;
-        const name = provider.data?.inputName;
-        const handleId = isValidJsIdentifier(name) ? name : 'value';
+
+        const targetNode = nodes.find((node) => node.id === edge.target);
+        // Only validate variable wiring into Text nodes — keep Input → LLM/Output/etc.
+        if (targetNode?.type !== 'text') return true;
+
+        const handleId = resolveInputHandleId(provider.data?.inputName);
         return edge.sourceHandle === variableHandleId(provider.id, handleId);
       });
       if (!edgesEqual(edges, nextEdges)) {

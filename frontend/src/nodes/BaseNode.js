@@ -65,6 +65,24 @@ const AutoGrowTextarea = ({ field, value, onChange }) => {
   );
 };
 
+const NodeDeleteButton = ({ nodeId }) => {
+  const deleteNode = useStore((state) => state.deleteNode);
+
+  return (
+    <button
+      type="button"
+      className="node-delete-btn nodrag nopan"
+      aria-label="Remove node"
+      onClick={(event) => {
+        event.stopPropagation();
+        deleteNode(nodeId);
+      }}
+    >
+      ×
+    </button>
+  );
+};
+
 const FieldControl = ({ field, value, onChange }) => {
   if (field.type === 'static') {
     return <span>{field.content ?? value}</span>;
@@ -165,6 +183,7 @@ const BaseNodeView = ({
 
   return (
     <div style={containerStyle}>
+      <NodeDeleteButton nodeId={id} />
       {resolvedHandles.map((handle) => (
         <Handle
           key={handle.id}
@@ -176,7 +195,7 @@ const BaseNodeView = ({
         />
       ))}
 
-      <header style={{ ...titleStyle, margin: 0 }}>{title}</header>
+      <header style={{ ...titleStyle, margin: 0, paddingRight: '26px' }}>{title}</header>
 
       {description ? (
         <div style={{ marginTop: '4px', opacity: 0.85 }}>{description}</div>
