@@ -61,6 +61,8 @@ export const SubmitButton = () => {
         onClose={closeModal}
         result={analysisResult}
         error={analysisError}
+        nodes={nodes}
+        edges={edges}
       />
       <div
         style={{
