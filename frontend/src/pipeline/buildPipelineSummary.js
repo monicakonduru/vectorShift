@@ -1,4 +1,4 @@
-import { nodeDefinitions } from '../nodes/nodeDefinitions';
+import { nodeDefinitions } from '../nodes/definitions';
 
 const getTypeTitle = (type) => nodeDefinitions[type]?.title ?? type;
 

@@ -1,4 +1,4 @@
-import { nodeDefinitions } from './nodeDefinitions';
+import { nodeDefinitions } from './definitions';
 
 /** Seed store node.data with field defaults so handles match edges immediately. */
 export const buildDefaultNodeData = (nodeId, type) => {
