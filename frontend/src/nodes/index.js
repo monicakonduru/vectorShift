@@ -9,7 +9,7 @@ import { ApiNode } from './apiNode';
 import { ConditionNode } from './conditionNode';
 
 export { createNode } from './createNode';
-export { BaseNode } from './BaseNode';
+export { BaseNode, resolveHandles } from './BaseNode';
 
 export const nodeTypes = {
   customInput: InputNode,

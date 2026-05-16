@@ -1,6 +1,6 @@
 // Presentational shell: layout, handles, and declarative fields.
 
-import { useRef, useLayoutEffect, useCallback } from 'react';
+import { useRef, useLayoutEffect, useCallback, useMemo } from 'react';
 import { Handle, Position } from 'reactflow';
 import {
   nodeContainerStyle,
@@ -9,6 +9,7 @@ import {
   fieldInputStyle,
   NODE_DEFAULTS,
 } from './nodeTheme';
+import { VariableAutocompleteTextarea } from './VariableAutocompleteTextarea';
 
 const POSITION_MAP = {
   left: Position.Left,
@@ -19,6 +20,18 @@ const POSITION_MAP = {
 
 const resolvePosition = (position) =>
   typeof position === 'string' ? POSITION_MAP[position] ?? Position.Left : position;
+
+/**
+ * @param {Array|function} handles - Static list or (ctx) => Handle[]
+ * @param {object} context
+ * @returns {Array}
+ */
+export const resolveHandles = (handles, context) => {
+  if (typeof handles === 'function') {
+    return handles(context) ?? [];
+  }
+  return handles ?? [];
+};
 
 const AutoGrowTextarea = ({ field, value, onChange }) => {
   const ref = useRef(null);
@@ -66,6 +79,12 @@ const FieldControl = ({ field, value, onChange }) => {
     );
   }
 
+  if (field.type === 'variable-textarea') {
+    return (
+      <VariableAutocompleteTextarea field={field} value={value} onChange={onChange} />
+    );
+  }
+
   if (field.type === 'textarea') {
     return <AutoGrowTextarea field={field} value={value} onChange={onChange} />;
   }
@@ -105,14 +124,31 @@ export const BaseNode = ({
   fieldValues = {},
   onFieldChange,
   description,
+  data,
   children,
 }) => {
   const containerStyle = nodeContainerStyle(width, minHeight, variant);
   const titleStyle = getTitleStyle(variant);
 
+  const resolvedHandles = useMemo(
+    () =>
+      resolveHandles(handles, {
+        id,
+        title,
+        variant,
+        width,
+        minHeight,
+        fields,
+        fieldValues,
+        description,
+        data,
+      }),
+    [handles, id, title, variant, width, minHeight, fields, fieldValues, description, data]
+  );
+
   return (
     <div style={containerStyle}>
-      {handles.map((handle) => (
+      {resolvedHandles.map((handle) => (
         <Handle
           key={handle.id}
           type={handle.type}

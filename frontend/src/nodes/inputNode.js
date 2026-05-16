@@ -1,9 +1,20 @@
 import { createNode } from './createNode';
+import { isValidJsIdentifier } from './parseTemplateVariables';
+import { useStore } from '../store';
+
+const resolveInputHandleId = (inputName) =>
+  isValidJsIdentifier(inputName) ? inputName : 'value';
 
 export const InputNode = createNode({
   title: 'Input',
   variant: 'io',
-  handles: [{ type: 'source', position: 'right', id: 'value' }],
+  handles: ({ fieldValues }) => [
+    {
+      type: 'source',
+      position: 'right',
+      id: resolveInputHandleId(fieldValues?.inputName),
+    },
+  ],
   fields: [
     {
       name: 'inputName',
@@ -22,4 +33,9 @@ export const InputNode = createNode({
       ],
     },
   ],
+  onFieldsChange: (id, name) => {
+    if (name === 'inputName' || name === '__mount__') {
+      useStore.getState().resyncAllTextVariableEdges();
+    }
+  },
 });
