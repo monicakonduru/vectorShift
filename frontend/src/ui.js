@@ -3,7 +3,8 @@
 // --------------------------------------------------
 
 import { useState, useRef, useCallback } from 'react';
-import ReactFlow, { Controls, Background, MiniMap } from 'reactflow';
+import ReactFlow, { Controls, Background, MiniMap, Panel } from 'reactflow';
+import { PipelineHelpPanel } from './PipelineHelpPanel';
 import { useStore } from './store';
 import { shallow } from 'zustand/shallow';
 import { nodeTypes } from './nodes';
@@ -106,7 +107,15 @@ export const PipelineUI = () => {
             >
                 <Background color="#aaa" gap={gridSize} />
                 <Controls />
-                <MiniMap />
+                <Panel position="bottom-right" className="pipeline-corner-panel">
+                  <PipelineHelpPanel />
+                  <MiniMap
+                    pannable
+                    zoomable
+                    className="pipeline-minimap"
+                    style={{ width: 140, height: 96 }}
+                  />
+                </Panel>
             </ReactFlow>
         </div>
         </>
