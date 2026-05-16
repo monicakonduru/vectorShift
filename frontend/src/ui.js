@@ -100,6 +100,7 @@ export const PipelineUI = () => {
                 proOptions={proOptions}
                 snapGrid={[gridSize, gridSize]}
                 connectionLineType='smoothstep'
+                connectionRadius={40}
                 elementsSelectable
                 nodesDeletable
                 edgesDeletable

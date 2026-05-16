@@ -131,3 +131,55 @@ code {
     transform: translateY(0) scale(1);
   }
 }
+
+/* Connection handles — larger hit area and grow on hover for easier wiring */
+.pipeline-handle {
+  width: 11px !important;
+  height: 11px !important;
+  border: 2px solid #0f172a !important;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+  z-index: 2;
+}
+
+.pipeline-handle::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+}
+
+.react-flow__handle-left.pipeline-handle {
+  transform-origin: center right;
+}
+
+.react-flow__handle-right.pipeline-handle {
+  transform-origin: center left;
+}
+
+.react-flow__handle-top.pipeline-handle {
+  transform-origin: center bottom;
+}
+
+.react-flow__handle-bottom.pipeline-handle {
+  transform-origin: center top;
+}
+
+.react-flow__node:hover .pipeline-handle {
+  transform: scale(1.35);
+}
+
+.pipeline-handle:hover,
+.react-flow__node:hover .pipeline-handle:hover {
+  transform: scale(2);
+  box-shadow: 0 0 0 8px rgba(125, 211, 252, 0.22);
+  z-index: 10;
+}
+
+.react-flow__handle.pipeline-handle.connecting,
+.react-flow__handle.pipeline-handle.valid {
+  transform: scale(2);
+  box-shadow: 0 0 0 8px rgba(125, 211, 252, 0.28);
+  z-index: 10;
+}

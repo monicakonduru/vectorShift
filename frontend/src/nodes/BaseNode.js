@@ -190,6 +190,7 @@ const BaseNodeView = ({
           type={handle.type}
           position={resolvePosition(handle.position)}
           id={`${id}-${handle.id}`}
+          className="pipeline-handle"
           style={handle.style}
           isConnectable
         />
