@@ -3,10 +3,12 @@
 // --------------------------------------------------
 
 import { useState, useRef, useCallback } from 'react';
-import ReactFlow, { Controls, Background, MiniMap } from 'reactflow';
+import ReactFlow, { Controls, Background, MiniMap, Panel } from 'reactflow';
+import { PipelineHelpPanel } from './PipelineHelpPanel';
 import { useStore } from './store';
 import { shallow } from 'zustand/shallow';
 import { nodeTypes } from './nodes';
+import { buildDefaultNodeData } from './nodes/buildDefaultNodeData';
 
 import 'reactflow/dist/style.css';
 
@@ -36,11 +38,6 @@ export const PipelineUI = () => {
       onConnect
     } = useStore(selector, shallow);
 
-    const getInitNodeData = (nodeID, type) => {
-      let nodeData = { id: nodeID, nodeType: `${type}` };
-      return nodeData;
-    }
-
     const onDrop = useCallback(
         (event) => {
           event.preventDefault();
@@ -65,7 +62,7 @@ export const PipelineUI = () => {
               id: nodeID,
               type,
               position,
-              data: getInitNodeData(nodeID, type),
+              data: buildDefaultNodeData(nodeID, type),
             };
       
             addNode(newNode);
@@ -79,6 +76,13 @@ export const PipelineUI = () => {
         event.dataTransfer.dropEffect = 'move';
     }, []);
 
+    const onEdgeDoubleClick = useCallback(
+        (_event, edge) => {
+          onEdgesChange([{ type: 'remove', id: edge.id }]);
+        },
+        [onEdgesChange]
+    );
+
     return (
         <>
         <div ref={reactFlowWrapper} style={{width: '100wv', height: '70vh'}}>
@@ -90,15 +94,29 @@ export const PipelineUI = () => {
                 onConnect={onConnect}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
+                onEdgeDoubleClick={onEdgeDoubleClick}
                 onInit={setReactFlowInstance}
                 nodeTypes={nodeTypes}
                 proOptions={proOptions}
                 snapGrid={[gridSize, gridSize]}
                 connectionLineType='smoothstep'
+                connectionRadius={28}
+                elementsSelectable
+                nodesDeletable
+                edgesDeletable
+                deleteKeyCode={['Backspace', 'Delete']}
             >
                 <Background color="#aaa" gap={gridSize} />
                 <Controls />
-                <MiniMap />
+                <Panel position="bottom-right" className="pipeline-corner-panel">
+                  <PipelineHelpPanel />
+                  <MiniMap
+                    pannable
+                    zoomable
+                    className="pipeline-minimap"
+                    style={{ width: 140, height: 96 }}
+                  />
+                </Panel>
             </ReactFlow>
         </div>
         </>

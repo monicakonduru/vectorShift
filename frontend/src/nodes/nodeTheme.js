@@ -8,6 +8,7 @@ export const NODE_DEFAULTS = {
 export const nodeContainerStyle = (width, minHeight, variant) => ({
   width,
   minHeight,
+  position: 'relative',
   ...VARIANT_STYLES[variant]?.container,
 });
 

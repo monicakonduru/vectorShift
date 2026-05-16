@@ -1,11 +1,6 @@
-import { createNode } from './createNode';
-import { isValidJsIdentifier } from './parseTemplateVariables';
-import { useStore } from '../store';
+import { onInputFieldsChange, resolveInputHandleId } from '../nodeEffects';
 
-const resolveInputHandleId = (inputName) =>
-  isValidJsIdentifier(inputName) ? inputName : 'value';
-
-export const InputNode = createNode({
+export const customInput = {
   title: 'Input',
   variant: 'io',
   handles: ({ fieldValues }) => [
@@ -33,9 +28,5 @@ export const InputNode = createNode({
       ],
     },
   ],
-  onFieldsChange: (id, name) => {
-    if (name === 'inputName' || name === '__mount__') {
-      useStore.getState().resyncAllTextVariableEdges();
-    }
-  },
-});
+  onFieldsChange: onInputFieldsChange,
+};

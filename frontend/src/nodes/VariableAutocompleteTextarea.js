@@ -108,44 +108,6 @@ export const VariableAutocompleteTextarea = ({ field, value, onChange }) => {
     [onChange]
   );
 
-  const refreshMenu = useCallback(() => {
-    const el = editorRef.current;
-    if (!el) return;
-
-    const serialized = serializeFromEditor(el);
-    const cursorPos = getCaretSerializedOffset(el);
-    const ctx = getTemplateContext(serialized, cursorPos);
-
-    if (!ctx) {
-      setMenu(null);
-      return;
-    }
-
-    const filtered = variables.filter((name) => name.startsWith(ctx.prefix));
-    setMenu({
-      prefix: ctx.prefix,
-      options: filtered,
-      activeIndex: 0,
-    });
-  }, [variables]);
-
-  useLayoutEffect(() => {
-    const el = editorRef.current;
-    if (!el) return;
-
-    if (skipSyncRef.current) {
-      skipSyncRef.current = false;
-      resize();
-      return;
-    }
-
-    const current = serializeFromEditor(el);
-    if (current !== value) {
-      renderEditorContent(el, value);
-    }
-    resize();
-  }, [value, resize]);
-
   const insertVariable = useCallback(
     (varName) => {
       const el = editorRef.current;
@@ -183,6 +145,54 @@ export const VariableAutocompleteTextarea = ({ field, value, onChange }) => {
     },
     [emitChange, resize]
   );
+
+  const refreshMenu = useCallback(() => {
+    const el = editorRef.current;
+    if (!el) return;
+
+    const serialized = serializeFromEditor(el);
+    const cursorPos = getCaretSerializedOffset(el);
+    const ctx = getTemplateContext(serialized, cursorPos);
+
+    if (!ctx) {
+      setMenu(null);
+      return;
+    }
+
+    const filtered = variables.filter((name) => name.startsWith(ctx.prefix));
+
+    // Single match: commit as soon as {{ is opened or the name is fully typed — no Enter/click.
+    if (filtered.length === 1) {
+      const only = filtered[0];
+      if (ctx.prefix === '' || ctx.prefix === only) {
+        queueMicrotask(() => insertVariable(only));
+        return;
+      }
+    }
+
+    setMenu({
+      prefix: ctx.prefix,
+      options: filtered,
+      activeIndex: 0,
+    });
+  }, [variables, insertVariable]);
+
+  useLayoutEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      resize();
+      return;
+    }
+
+    const current = serializeFromEditor(el);
+    if (current !== value) {
+      renderEditorContent(el, value);
+    }
+    resize();
+  }, [value, resize]);
 
   const removePill = (pill) => {
     pill.remove();
@@ -274,7 +284,7 @@ export const VariableAutocompleteTextarea = ({ field, value, onChange }) => {
       return;
     }
 
-    if (e.key === 'Enter' && menu.options.length > 0) {
+    if ((e.key === 'Enter' || e.key === 'Tab') && menu.options.length > 0) {
       e.preventDefault();
       e.stopPropagation();
       insertVariable(menu.options[menu.activeIndex]);
@@ -309,7 +319,12 @@ export const VariableAutocompleteTextarea = ({ field, value, onChange }) => {
         style={editorStyle}
       />
       {showMenu && (
-        <ul className="nodrag" style={dropdownStyle} role="listbox">
+        <ul
+          className="nodrag"
+          style={dropdownStyle}
+          role="listbox"
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {hasOptions ? (
             menu.options.map((name, index) => (
               <li

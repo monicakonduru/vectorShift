@@ -1,6 +1,4 @@
-import { createNode } from './createNode';
-
-export const FilterNode = createNode({
+export const filter = {
   title: 'Filter',
   variant: 'process',
   description: 'Keep rows matching a rule.',
@@ -27,4 +25,4 @@ export const FilterNode = createNode({
       defaultValue: '',
     },
   ],
-});
+};

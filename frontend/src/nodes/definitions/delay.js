@@ -1,6 +1,4 @@
-import { createNode } from './createNode';
-
-export const DelayNode = createNode({
+export const delay = {
   title: 'Delay',
   variant: 'utility',
   description: 'Pause execution for a duration.',
@@ -18,4 +16,4 @@ export const DelayNode = createNode({
       step: 100,
     },
   ],
-});
+};

@@ -1,6 +1,4 @@
-import { createNode } from './createNode';
-
-export const ConditionNode = createNode({
+export const condition = {
   title: 'Condition',
   variant: 'process',
   minHeight: 100,
@@ -30,4 +28,4 @@ export const ConditionNode = createNode({
       defaultValue: '',
     },
   ],
-});
+};

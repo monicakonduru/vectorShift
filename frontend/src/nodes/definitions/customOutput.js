@@ -1,9 +1,7 @@
-import { createNode } from './createNode';
-
-export const OutputNode = createNode({
+export const customOutput = {
   title: 'Output',
   variant: 'io',
-  handles:() => [{ type: 'target', position: 'left', id: 'value' }],
+  handles: () => [{ type: 'target', position: 'left', id: 'value' }],
   fields: [
     {
       name: 'outputName',
@@ -22,4 +20,4 @@ export const OutputNode = createNode({
       ],
     },
   ],
-});
+};

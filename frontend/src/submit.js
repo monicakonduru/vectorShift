@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { shallow } from 'zustand/shallow';
+import { PipelineAnalysisModal } from './PipelineAnalysisModal';
 import { useStore } from './store';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
@@ -12,11 +13,20 @@ const selector = (state) => ({
 export const SubmitButton = () => {
   const { nodes, edges } = useStore(selector, shallow);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisError, setAnalysisError] = useState(null);
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
-    setMessage(null);
+    setAnalysisResult(null);
+    setAnalysisError(null);
 
     try {
       const formData = new FormData();
@@ -32,46 +42,56 @@ export const SubmitButton = () => {
       }
 
       const result = await response.json();
-      setMessage({
-        type: 'success',
-        text: `Pipeline sent! ${result.num_nodes} nodes, ${result.num_edges} edges.`,
-      });
+      setAnalysisResult(result);
+      setModalOpen(true);
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text:
-          error.message ||
-          'Could not reach the backend. Is it running on port 8000?',
-      });
+      setAnalysisError(
+        error.message || 'Could not reach the backend. Is it running on port 8000?'
+      );
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        padding: '16px',
-      }}
-    >
-      <button type="button" onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Sending…' : 'Submit'}
-      </button>
-      {message && (
-        <p
+    <>
+      <PipelineAnalysisModal
+        open={modalOpen}
+        onClose={closeModal}
+        result={analysisResult}
+        error={analysisError}
+        nodes={nodes}
+        edges={edges}
+      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '16px',
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={loading}
           style={{
-            margin: 0,
-            color: message.type === 'error' ? '#c0392b' : '#27ae60',
+            padding: '10px 28px',
+            borderRadius: '8px',
+            border: '1px solid #475569',
+            background: loading ? '#1e293b' : '#334155',
+            color: loading ? '#94a3b8' : '#e2e8f0',
+            fontSize: '14px',
+            fontWeight: 500,
+            cursor: loading ? 'not-allowed' : 'pointer',
           }}
         >
-          {message.text}
-        </p>
-      )}
-    </div>
+          {loading ? 'Analyzing…' : 'Submit'}
+        </button>
+      </div>
+    </>
   );
 };

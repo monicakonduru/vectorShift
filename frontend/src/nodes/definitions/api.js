@@ -1,6 +1,4 @@
-import { createNode } from './createNode';
-
-export const ApiNode = createNode({
+export const api = {
   title: 'API',
   variant: 'io',
   minHeight: 110,
@@ -27,4 +25,4 @@ export const ApiNode = createNode({
       defaultValue: 'https://api.example.com',
     },
   ],
-});
+};

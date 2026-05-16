@@ -3,6 +3,11 @@ const TEMPLATE_VAR_PATTERN = /\{\{\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\}\}/g;
 export const isValidJsIdentifier = (name) =>
   typeof name === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name);
 
+export const hasCompleteTemplateVariables = (text) => {
+  if (!text) return false;
+  return /\{\{\s*[a-zA-Z_$][a-zA-Z0-9_$]*\s*\}\}/.test(text);
+};
+
 export const parseTemplateVariables = (text) => {
   if (!text) return [];
   const names = new Set();

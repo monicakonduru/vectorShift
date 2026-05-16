@@ -1,6 +1,4 @@
-import { createNode } from './createNode';
-
-export const MergeNode = createNode({
+export const merge = {
   title: 'Merge',
   variant: 'process',
   minHeight: 100,
@@ -23,4 +21,4 @@ export const MergeNode = createNode({
       ],
     },
   ],
-});
+};
