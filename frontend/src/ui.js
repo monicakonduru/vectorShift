@@ -4,7 +4,6 @@
 
 import { useState, useRef, useCallback } from 'react';
 import ReactFlow, { Controls, Background, MiniMap, Panel } from 'reactflow';
-import { PipelineHelpPanel } from './PipelineHelpPanel';
 import { useStore } from './store';
 import { shallow } from 'zustand/shallow';
 import { nodeTypes } from './nodes';
@@ -12,7 +11,7 @@ import { buildDefaultNodeData } from './nodes/buildDefaultNodeData';
 
 import 'reactflow/dist/style.css';
 
-const gridSize = 20;
+const gridSize = 24;
 const proOptions = { hideAttribution: true };
 
 const selector = (state) => ({
@@ -26,99 +25,117 @@ const selector = (state) => ({
 });
 
 export const PipelineUI = () => {
-    const reactFlowWrapper = useRef(null);
-    const [reactFlowInstance, setReactFlowInstance] = useState(null);
-    const {
-      nodes,
-      edges,
-      getNodeID,
-      addNode,
-      onNodesChange,
-      onEdgesChange,
-      onConnect
-    } = useStore(selector, shallow);
+  const reactFlowWrapper = useRef(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const {
+    nodes,
+    edges,
+    getNodeID,
+    addNode,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+  } = useStore(selector, shallow);
 
-    const onDrop = useCallback(
-        (event) => {
-          event.preventDefault();
-    
-          const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-          if (event?.dataTransfer?.getData('application/reactflow')) {
-            const appData = JSON.parse(event.dataTransfer.getData('application/reactflow'));
-            const type = appData?.nodeType;
-      
-            // check if the dropped element is valid
-            if (typeof type === 'undefined' || !type) {
-              return;
-            }
-      
-            const position = reactFlowInstance.project({
-              x: event.clientX - reactFlowBounds.left,
-              y: event.clientY - reactFlowBounds.top,
-            });
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
 
-            const nodeID = getNodeID(type);
-            const newNode = {
-              id: nodeID,
-              type,
-              position,
-              data: buildDefaultNodeData(nodeID, type),
-            };
-      
-            addNode(newNode);
-          }
-        },
-        [reactFlowInstance]
-    );
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      if (event?.dataTransfer?.getData('application/reactflow')) {
+        const appData = JSON.parse(
+          event.dataTransfer.getData('application/reactflow')
+        );
+        const type = appData?.nodeType;
 
-    const onDragOver = useCallback((event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-    }, []);
+        if (typeof type === 'undefined' || !type) {
+          return;
+        }
 
-    const onEdgeDoubleClick = useCallback(
-        (_event, edge) => {
-          onEdgesChange([{ type: 'remove', id: edge.id }]);
-        },
-        [onEdgesChange]
-    );
+        const position = reactFlowInstance.project({
+          x: event.clientX - reactFlowBounds.left,
+          y: event.clientY - reactFlowBounds.top,
+        });
 
-    return (
-        <>
-        <div ref={reactFlowWrapper} style={{width: '100wv', height: '70vh'}}>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onEdgeDoubleClick={onEdgeDoubleClick}
-                onInit={setReactFlowInstance}
-                nodeTypes={nodeTypes}
-                proOptions={proOptions}
-                snapGrid={[gridSize, gridSize]}
-                connectionLineType='smoothstep'
-                connectionRadius={28}
-                elementsSelectable
-                nodesDeletable
-                edgesDeletable
-                deleteKeyCode={['Backspace', 'Delete']}
-            >
-                <Background color="#aaa" gap={gridSize} />
-                <Controls />
-                <Panel position="bottom-right" className="pipeline-corner-panel">
-                  <PipelineHelpPanel />
-                  <MiniMap
-                    pannable
-                    zoomable
-                    className="pipeline-minimap"
-                    style={{ width: 140, height: 96 }}
-                  />
-                </Panel>
-            </ReactFlow>
-        </div>
-        </>
-    )
-}
+        const nodeID = getNodeID(type);
+        const newNode = {
+          id: nodeID,
+          type,
+          position,
+          data: buildDefaultNodeData(nodeID, type),
+        };
+
+        addNode(newNode);
+      }
+    },
+    [reactFlowInstance, getNodeID, addNode]
+  );
+
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onEdgeDoubleClick = useCallback(
+    (_event, edge) => {
+      onEdgesChange([{ type: 'remove', id: edge.id }]);
+    },
+    [onEdgesChange]
+  );
+
+  return (
+    <div ref={reactFlowWrapper} className="pipeline-canvas">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onEdgeDoubleClick={onEdgeDoubleClick}
+        onInit={setReactFlowInstance}
+        nodeTypes={nodeTypes}
+        proOptions={proOptions}
+        snapGrid={[gridSize, gridSize]}
+        snapToGrid
+        connectionLineType="smoothstep"
+        connectionRadius={28}
+        elementsSelectable
+        nodesDeletable
+        edgesDeletable
+        deleteKeyCode={['Backspace', 'Delete']}
+      >
+        <Background
+          variant="dots"
+          gap={gridSize}
+          size={1.2}
+          color="rgba(148, 163, 184, 0.14)"
+        />
+        <Controls showInteractive={false} />
+        <Panel position="bottom-right" className="pipeline-corner-panel">
+          <MiniMap
+            pannable
+            zoomable
+            className="pipeline-minimap"
+            nodeColor={(node) => {
+              const colors = {
+                customInput: '#f472b6',
+                customOutput: '#22d3ee',
+                llm: '#a333ff',
+                text: '#00aaff',
+                filter: '#ffcc00',
+                merge: '#00ff88',
+                delay: '#94a3b8',
+                api: '#00aaff',
+                condition: '#fb923c',
+              };
+              return colors[node.type] ?? '#64748b';
+            }}
+            maskColor="rgba(11, 14, 20, 0.72)"
+          />
+        </Panel>
+      </ReactFlow>
+    </div>
+  );
+};
