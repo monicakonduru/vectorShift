@@ -132,54 +132,35 @@ code {
   }
 }
 
-/* Connection handles — larger hit area and grow on hover for easier wiring */
-.pipeline-handle {
-  width: 11px !important;
-  height: 11px !important;
-  border: 2px solid #0f172a !important;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
-  z-index: 2;
+/* Connection handles — neutral dots, invisible larger hit area, no glow */
+.pipeline-handle,
+.pipeline-handle:hover,
+.react-flow__handle.pipeline-handle.connecting,
+.react-flow__handle.pipeline-handle.valid {
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
 }
 
+.pipeline-handle {
+  width: 8px !important;
+  height: 8px !important;
+  border: 1.5px solid #334155 !important;
+  background: #64748b !important;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+/* Invisible padding for easier grab; visual size stays small */
 .pipeline-handle::after {
   content: '';
   position: absolute;
-  inset: -12px;
+  inset: -7px;
   border-radius: 50%;
 }
 
-.react-flow__handle-left.pipeline-handle {
-  transform-origin: center right;
-}
-
-.react-flow__handle-right.pipeline-handle {
-  transform-origin: center left;
-}
-
-.react-flow__handle-top.pipeline-handle {
-  transform-origin: center bottom;
-}
-
-.react-flow__handle-bottom.pipeline-handle {
-  transform-origin: center top;
-}
-
-.react-flow__node:hover .pipeline-handle {
-  transform: scale(1.35);
-}
-
 .pipeline-handle:hover,
-.react-flow__node:hover .pipeline-handle:hover {
-  transform: scale(2);
-  box-shadow: 0 0 0 8px rgba(125, 211, 252, 0.22);
-  z-index: 10;
-}
-
 .react-flow__handle.pipeline-handle.connecting,
 .react-flow__handle.pipeline-handle.valid {
-  transform: scale(2);
-  box-shadow: 0 0 0 8px rgba(125, 211, 252, 0.28);
-  z-index: 10;
+  background: #94a3b8 !important;
+  border-color: #64748b !important;
 }
