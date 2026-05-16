@@ -1,7 +1,8 @@
-// Presentational shell: layout, handles, and declarative fields.
+// BaseNode: declarative nodes — define config once; layout, state, store sync, and fields are handled here.
 
-import { useRef, useLayoutEffect, useCallback, useMemo } from 'react';
-import { Handle, Position } from 'reactflow';
+import { useRef, useState, useLayoutEffect, useCallback, useEffect, useMemo } from 'react';
+import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
+import { useStore } from '../store';
 import {
   nodeContainerStyle,
   getTitleStyle,
@@ -21,15 +22,21 @@ const POSITION_MAP = {
 const resolvePosition = (position) =>
   typeof position === 'string' ? POSITION_MAP[position] ?? Position.Left : position;
 
-/**
- * @param {Array|function} handles - Static list or (ctx) => Handle[]
- * @param {object} context
- * @returns {Array}
- */
+const resolveDefault = (defaultValue, id, data) => {
+  if (typeof defaultValue === 'function') return defaultValue(id, data);
+  if (defaultValue !== undefined) return defaultValue;
+  return '';
+};
+
+const buildInitialFieldValues = (fields, id, data) =>
+  fields.reduce((acc, field) => {
+    acc[field.name] = data?.[field.name] ?? resolveDefault(field.defaultValue, id, data);
+    return acc;
+  }, {});
+
+/** Static list or (ctx) => Handle[] */
 export const resolveHandles = (handles, context) => {
-  if (typeof handles === 'function') {
-    return handles(context) ?? [];
-  }
+  if (typeof handles === 'function') return handles(context) ?? [];
   return handles ?? [];
 };
 
@@ -65,11 +72,7 @@ const FieldControl = ({ field, value, onChange }) => {
 
   if (field.type === 'select') {
     return (
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={fieldInputStyle}
-      >
+      <select value={value} onChange={(e) => onChange(e.target.value)} style={fieldInputStyle}>
         {field.options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
@@ -80,9 +83,7 @@ const FieldControl = ({ field, value, onChange }) => {
   }
 
   if (field.type === 'variable-textarea') {
-    return (
-      <VariableAutocompleteTextarea field={field} value={value} onChange={onChange} />
-    );
+    return <VariableAutocompleteTextarea field={field} value={value} onChange={onChange} />;
   }
 
   if (field.type === 'textarea') {
@@ -113,7 +114,7 @@ const FieldControl = ({ field, value, onChange }) => {
   );
 };
 
-export const BaseNode = ({
+const BaseNodeView = ({
   id,
   title,
   variant = 'default',
@@ -126,6 +127,7 @@ export const BaseNode = ({
   description,
   data,
   children,
+  onHandlesUpdated,
 }) => {
   const containerStyle = nodeContainerStyle(width, minHeight, variant);
   const titleStyle = getTitleStyle(variant);
@@ -146,6 +148,21 @@ export const BaseNode = ({
     [handles, id, title, variant, width, minHeight, fields, fieldValues, description, data]
   );
 
+  const handleSignature = useMemo(
+    () => resolvedHandles.map((h) => `${h.type}:${h.id}`).join('|'),
+    [resolvedHandles]
+  );
+
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  // React Flow must recalculate handle positions when handles are added/removed (e.g. {{var}} in Text node).
+  useLayoutEffect(() => {
+    updateNodeInternals(id);
+    onHandlesUpdated?.(id, fieldValues);
+    // Only re-run when handle set changes, not on every field keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, handleSignature, updateNodeInternals, onHandlesUpdated]);
+
   return (
     <div style={containerStyle}>
       {resolvedHandles.map((handle) => (
@@ -155,6 +172,7 @@ export const BaseNode = ({
           position={resolvePosition(handle.position)}
           id={`${id}-${handle.id}`}
           style={handle.style}
+          isConnectable
         />
       ))}
 
@@ -179,3 +197,86 @@ export const BaseNode = ({
     </div>
   );
 };
+
+/**
+ * Create a React Flow node component from a declarative config.
+ * Handles local field state, Zustand sync, handles, and optional side effects.
+ */
+export function defineNode(config) {
+  const {
+    title,
+    variant = 'default',
+    width = NODE_DEFAULTS.width,
+    minHeight = NODE_DEFAULTS.minHeight,
+    description,
+    handles = [],
+    fields = [],
+    render,
+    onFieldsChange,
+  } = config;
+
+  const NodeComponent = ({ id, data }) => {
+    const [fieldValues, setFieldValues] = useState(() =>
+      buildInitialFieldValues(fields, id, data)
+    );
+
+    const onFieldChange = useCallback(
+      (name, value) => {
+        setFieldValues((prev) => {
+          const next = { ...prev, [name]: value };
+          useStore.getState().updateNodeField(id, name, value);
+          onFieldsChange?.(id, name, value, next);
+          return next;
+        });
+      },
+      [id]
+    );
+
+    useEffect(() => {
+      fields.forEach((field) => {
+        useStore.getState().updateNodeField(id, field.name, fieldValues[field.name]);
+      });
+      onFieldsChange?.(id, '__mount__', null, fieldValues);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    const customBody = render
+      ? render({ id, data, values: fieldValues, setField: onFieldChange })
+      : null;
+
+    const onHandlesUpdated = onFieldsChange
+      ? (nodeId, values) => onFieldsChange(nodeId, '__handles__', null, values)
+      : undefined;
+
+    return (
+      <BaseNodeView
+        id={id}
+        title={title}
+        variant={variant}
+        width={width}
+        minHeight={minHeight}
+        handles={handles}
+        fields={fields}
+        fieldValues={fieldValues}
+        onFieldChange={onFieldChange}
+        description={description}
+        data={data}
+        onHandlesUpdated={onHandlesUpdated}
+      >
+        {customBody}
+      </BaseNodeView>
+    );
+  };
+
+  NodeComponent.displayName = `${title.replace(/\s+/g, '')}Node`;
+  return NodeComponent;
+}
+
+/** @deprecated Use defineNode */
+export const createNode = defineNode;
+
+/** Build nodeTypes map from a definitions registry */
+export const buildNodeTypes = (definitions) =>
+  Object.fromEntries(
+    Object.entries(definitions).map(([type, config]) => [type, defineNode(config)])
+  );
