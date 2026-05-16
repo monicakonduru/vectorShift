@@ -3,6 +3,7 @@ import { buildTextHandles, onTextFieldsChange } from '../nodeEffects';
 export const text = {
   title: 'Text',
   variant: 'default',
+  icon: 'text',
   handles: buildTextHandles,
   fields: [
     {

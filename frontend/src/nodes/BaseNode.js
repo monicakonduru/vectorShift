@@ -5,7 +5,7 @@ import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
 import { useStore } from '../store';
 import {
   nodeContainerStyle,
-  getTitleStyle,
+  getVariantClasses,
   fieldLabelStyle,
   fieldInputStyle,
   NODE_DEFAULTS,
@@ -19,6 +19,23 @@ const POSITION_MAP = {
   bottom: Position.Bottom,
 };
 
+const NODE_ICONS = {
+  api: (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+    </svg>
+  ),
+  input: '⇢',
+  output: '⇠',
+  llm: '✦',
+  text: '¶',
+  filter: '⧉',
+  merge: '⊕',
+  delay: '◷',
+  condition: '⑂',
+  default: '●',
+};
+
 const resolvePosition = (position) =>
   typeof position === 'string' ? POSITION_MAP[position] ?? Position.Left : position;
 
@@ -28,11 +45,20 @@ const resolveDefault = (defaultValue, id, data) => {
   return '';
 };
 
-const buildInitialFieldValues = (fields, id, data) =>
-  fields.reduce((acc, field) => {
-    acc[field.name] = data?.[field.name] ?? resolveDefault(field.defaultValue, id, data);
-    return acc;
-  }, {});
+const buildInitialFieldValues = (fields, id, data) => {
+  const values = {};
+  const walk = (list) => {
+    list.forEach((field) => {
+      if (field.type === 'section') {
+        walk(field.fields ?? []);
+        return;
+      }
+      values[field.name] = data?.[field.name] ?? resolveDefault(field.defaultValue, id, data);
+    });
+  };
+  walk(fields);
+  return values;
+};
 
 /** Static list or (ctx) => Handle[] */
 export const resolveHandles = (handles, context) => {
@@ -40,7 +66,10 @@ export const resolveHandles = (handles, context) => {
   return handles ?? [];
 };
 
-const AutoGrowTextarea = ({ field, value, onChange }) => {
+const flattenFields = (fields) =>
+  fields.flatMap((field) => (field.type === 'section' ? field.fields ?? [] : [field]));
+
+const AutoGrowTextarea = ({ field, value, onChange, className }) => {
   const ref = useRef(null);
 
   const resize = useCallback(() => {
@@ -60,6 +89,8 @@ const AutoGrowTextarea = ({ field, value, onChange }) => {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       rows={field.rows ?? 1}
+      placeholder={field.placeholder}
+      className={className}
       style={{ ...fieldInputStyle, resize: 'none', overflow: 'hidden' }}
     />
   );
@@ -71,26 +102,54 @@ const NodeDeleteButton = ({ nodeId }) => {
   return (
     <button
       type="button"
-      className="node-delete-btn nodrag nopan"
+      className="pipeline-node__action pipeline-node__action--danger nodrag nopan"
       aria-label="Remove node"
+      title="Delete"
       onClick={(event) => {
         event.stopPropagation();
         deleteNode(nodeId);
       }}
     >
-      ×
+      <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+        />
+      </svg>
     </button>
   );
 };
 
-const FieldControl = ({ field, value, onChange }) => {
+const FieldControl = ({ field, value, onChange, className }) => {
   if (field.type === 'static') {
-    return <span>{field.content ?? value}</span>;
+    return null;
+  }
+
+  if (field.type === 'select' && field.layout === 'method-badge') {
+    return (
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`pipeline-node__method-select nodrag nopan ${className ?? ''}`}
+        aria-label={field.label ?? 'HTTP method'}
+      >
+        {field.options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
   }
 
   if (field.type === 'select') {
     return (
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={fieldInputStyle}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={className}
+        style={fieldInputStyle}
+      >
         {field.options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
@@ -105,7 +164,7 @@ const FieldControl = ({ field, value, onChange }) => {
   }
 
   if (field.type === 'textarea') {
-    return <AutoGrowTextarea field={field} value={value} onChange={onChange} />;
+    return <AutoGrowTextarea field={field} value={value} onChange={onChange} className={className} />;
   }
 
   if (field.type === 'number') {
@@ -117,6 +176,7 @@ const FieldControl = ({ field, value, onChange }) => {
         max={field.max}
         step={field.step}
         onChange={(e) => onChange(e.target.value)}
+        className={className}
         style={fieldInputStyle}
       />
     );
@@ -126,9 +186,150 @@ const FieldControl = ({ field, value, onChange }) => {
     <input
       type="text"
       value={value}
+      placeholder={field.placeholder}
       onChange={(e) => onChange(e.target.value)}
+      className={className}
       style={fieldInputStyle}
     />
+  );
+};
+
+const CollapsibleSection = ({ field, fieldValues, onFieldChange }) => {
+  const [open, setOpen] = useState(!field.collapsed);
+
+  return (
+    <section className="pipeline-node__section nodrag nopan">
+      <button
+        type="button"
+        className="pipeline-node__section-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className={`pipeline-node__chevron ${open ? 'is-open' : ''}`} aria-hidden="true">
+          ▸
+        </span>
+        {field.label}
+      </button>
+      {open ? (
+        <div className="pipeline-node__section-body">
+          {(field.fields ?? []).map((subField) => (
+            <label key={subField.name} style={fieldLabelStyle}>
+              {subField.label}:
+              <FieldControl
+                field={subField}
+                value={fieldValues[subField.name] ?? ''}
+                onChange={(val) => onFieldChange(subField.name, val)}
+              />
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
+const PipelineHandle = ({ handle, nodeId }) => {
+  const tone = handle.tone ?? 'default';
+  const position = resolvePosition(handle.position);
+  const isRight = position === Position.Right;
+
+  const groupStyle = {
+    top: handle.style?.top ?? '50%',
+    ...handle.style,
+  };
+
+  return (
+    <div
+      className={`pipeline-handle-group pipeline-handle-group--${tone} ${
+        isRight ? 'pipeline-handle-group--right' : 'pipeline-handle-group--left'
+      }`}
+      style={groupStyle}
+    >
+      {handle.label && isRight ? (
+        <span className={`pipeline-handle-label pipeline-handle-label--${tone}`}>
+          {handle.label}
+        </span>
+      ) : null}
+      <Handle
+        type={handle.type}
+        position={position}
+        id={`${nodeId}-${handle.id}`}
+        className={`pipeline-handle pipeline-handle--${tone}`}
+        isConnectable
+      />
+    </div>
+  );
+};
+
+const NodeHeader = ({ title, variant, icon, nodeId, showStatus }) => {
+  const variantClasses = getVariantClasses(variant);
+  const iconContent = NODE_ICONS[icon] ?? NODE_ICONS.default;
+
+  return (
+    <header className="pipeline-node__header">
+      <span className="pipeline-node__icon" aria-hidden="true">
+        {iconContent}
+      </span>
+      <h3 className={`pipeline-node__title ${variantClasses.titleClass}`}>{title}</h3>
+      {showStatus ? (
+        <span className="pipeline-node__status-dot" title="Configured" aria-label="Configured">
+          ✓
+        </span>
+      ) : null}
+      <div className="pipeline-node__actions nodrag nopan">
+        <NodeDeleteButton nodeId={nodeId} />
+      </div>
+    </header>
+  );
+};
+
+const NodeFields = ({ fields, fieldValues, onFieldChange }) => {
+  const requestFields = fields.filter((f) => f.group === 'request-row');
+  const otherFields = fields.filter(
+    (f) => f.group !== 'request-row' && f.type !== 'section' && f.type !== 'static'
+  );
+  const sections = fields.filter((f) => f.type === 'section');
+
+  return (
+    <div className="pipeline-node__fields nodrag nopan">
+      {requestFields.length > 0 ? (
+        <div className="pipeline-node__request-row">
+          {requestFields.map((field) => (
+            <FieldControl
+              key={field.name}
+              field={field}
+              value={fieldValues[field.name] ?? ''}
+              onChange={(val) => onFieldChange(field.name, val)}
+              className={field.name === 'url' ? 'pipeline-node__url-input' : undefined}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {sections.map((field) => (
+        <CollapsibleSection
+          key={field.name}
+          field={field}
+          fieldValues={fieldValues}
+          onFieldChange={onFieldChange}
+        />
+      ))}
+
+      {otherFields.map((field) => (
+        <label
+          key={field.name}
+          style={field.hideLabel ? { ...fieldLabelStyle, marginTop: '8px' } : fieldLabelStyle}
+          className={field.hideLabel ? 'pipeline-node__field--bare' : undefined}
+        >
+          {!field.hideLabel ? `${field.label}:` : null}
+          <FieldControl
+            field={field}
+            value={fieldValues[field.name] ?? ''}
+            onChange={(val) => onFieldChange(field.name, val)}
+          />
+        </label>
+      ))}
+    </div>
   );
 };
 
@@ -136,6 +337,7 @@ const BaseNodeView = ({
   id,
   title,
   variant = 'default',
+  icon,
   width = NODE_DEFAULTS.width,
   minHeight = NODE_DEFAULTS.minHeight,
   handles = [],
@@ -146,9 +348,10 @@ const BaseNodeView = ({
   data,
   children,
   onHandlesUpdated,
+  showStatus,
 }) => {
-  const containerStyle = nodeContainerStyle(width, minHeight, variant);
-  const titleStyle = getTitleStyle(variant);
+  const containerStyle = nodeContainerStyle(width, minHeight);
+  const variantClasses = getVariantClasses(variant);
 
   const resolvedHandles = useMemo(
     () =>
@@ -173,59 +376,45 @@ const BaseNodeView = ({
 
   const updateNodeInternals = useUpdateNodeInternals();
 
-  // React Flow must recalculate handle positions when handles are added/removed (e.g. {{var}} in Text node).
   useLayoutEffect(() => {
     updateNodeInternals(id);
     onHandlesUpdated?.(id, fieldValues);
-    // Only re-run when handle set changes, not on every field keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, handleSignature, updateNodeInternals, onHandlesUpdated]);
 
   return (
-    <div style={containerStyle}>
-      <NodeDeleteButton nodeId={id} />
+    <div
+      className={`pipeline-node ${variantClasses.containerClass}`}
+      style={containerStyle}
+    >
       {resolvedHandles.map((handle) => (
-        <Handle
-          key={handle.id}
-          type={handle.type}
-          position={resolvePosition(handle.position)}
-          id={`${id}-${handle.id}`}
-          className="pipeline-handle"
-          style={handle.style}
-          isConnectable
-        />
+        <PipelineHandle key={handle.id} handle={handle} nodeId={id} />
       ))}
 
-      <header style={{ ...titleStyle, margin: 0, paddingRight: '26px' }}>{title}</header>
+      <NodeHeader
+        title={title}
+        variant={variant}
+        icon={icon}
+        nodeId={id}
+        showStatus={showStatus}
+      />
 
-      {description ? (
-        <div style={{ marginTop: '4px', opacity: 0.85 }}>{description}</div>
+      {description ? <p className="pipeline-node__description">{description}</p> : null}
+
+      {fields.length > 0 ? (
+        <NodeFields fields={fields} fieldValues={fieldValues} onFieldChange={onFieldChange} />
       ) : null}
-
-      {fields.map((field) => (
-        <label key={field.name} style={fieldLabelStyle}>
-          {field.label}:
-          <FieldControl
-            field={field}
-            value={fieldValues[field.name] ?? ''}
-            onChange={(val) => onFieldChange(field.name, val)}
-          />
-        </label>
-      ))}
 
       {children}
     </div>
   );
 };
 
-/**
- * Create a React Flow node component from a declarative config.
- * Handles local field state, Zustand sync, handles, and optional side effects.
- */
 export function defineNode(config) {
   const {
     title,
     variant = 'default',
+    icon,
     width = NODE_DEFAULTS.width,
     minHeight = NODE_DEFAULTS.minHeight,
     description,
@@ -233,7 +422,10 @@ export function defineNode(config) {
     fields = [],
     render,
     onFieldsChange,
+    showStatus,
   } = config;
+
+  const allFields = flattenFields(fields);
 
   const NodeComponent = ({ id, data }) => {
     const [fieldValues, setFieldValues] = useState(() =>
@@ -253,7 +445,7 @@ export function defineNode(config) {
     );
 
     useEffect(() => {
-      fields.forEach((field) => {
+      allFields.forEach((field) => {
         useStore.getState().updateNodeField(id, field.name, fieldValues[field.name]);
       });
       onFieldsChange?.(id, '__mount__', null, fieldValues);
@@ -273,6 +465,7 @@ export function defineNode(config) {
         id={id}
         title={title}
         variant={variant}
+        icon={icon}
         width={width}
         minHeight={minHeight}
         handles={handles}
@@ -282,6 +475,7 @@ export function defineNode(config) {
         description={description}
         data={data}
         onHandlesUpdated={onHandlesUpdated}
+        showStatus={showStatus}
       >
         {customBody}
       </BaseNodeView>
@@ -295,7 +489,6 @@ export function defineNode(config) {
 /** @deprecated Use defineNode */
 export const createNode = defineNode;
 
-/** Build nodeTypes map from a definitions registry */
 export const buildNodeTypes = (definitions) =>
   Object.fromEntries(
     Object.entries(definitions).map(([type, config]) => [type, defineNode(config)])

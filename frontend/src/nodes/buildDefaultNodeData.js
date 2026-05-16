@@ -9,7 +9,11 @@ export const buildDefaultNodeData = (nodeId, type) => {
     return data;
   }
 
-  definition.fields.forEach((field) => {
+  const seedField = (field) => {
+    if (field.type === 'section') {
+      (field.fields ?? []).forEach(seedField);
+      return;
+    }
     if (typeof field.defaultValue === 'function') {
       data[field.name] = field.defaultValue(nodeId, data);
     } else if (field.defaultValue !== undefined) {
@@ -17,7 +21,9 @@ export const buildDefaultNodeData = (nodeId, type) => {
     } else {
       data[field.name] = '';
     }
-  });
+  };
+
+  definition.fields.forEach(seedField);
 
   return data;
 };

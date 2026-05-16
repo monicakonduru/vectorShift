@@ -1,6 +1,7 @@
 export const merge = {
   title: 'Merge',
   variant: 'process',
+  icon: 'merge',
   minHeight: 100,
   description: 'Combine two inputs into one stream.',
   handles: [

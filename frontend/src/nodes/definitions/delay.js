@@ -1,6 +1,7 @@
 export const delay = {
   title: 'Delay',
   variant: 'utility',
+  icon: 'delay',
   description: 'Pause execution for a duration.',
   handles: [
     { type: 'target', position: 'left', id: 'in' },

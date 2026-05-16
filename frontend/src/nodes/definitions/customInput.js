@@ -3,6 +3,7 @@ import { onInputFieldsChange, resolveInputHandleId } from '../nodeEffects';
 export const customInput = {
   title: 'Input',
   variant: 'io',
+  icon: 'input',
   handles: ({ fieldValues }) => [
     {
       type: 'source',
