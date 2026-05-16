@@ -1,5 +1,6 @@
 // Presentational shell: layout, handles, and declarative fields.
 
+import { useRef, useLayoutEffect, useCallback } from 'react';
 import { Handle, Position } from 'reactflow';
 import {
   nodeContainerStyle,
@@ -18,6 +19,31 @@ const POSITION_MAP = {
 
 const resolvePosition = (position) =>
   typeof position === 'string' ? POSITION_MAP[position] ?? Position.Left : position;
+
+const AutoGrowTextarea = ({ field, value, onChange }) => {
+  const ref = useRef(null);
+
+  const resize = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    resize();
+  }, [value, resize]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={field.rows ?? 1}
+      style={{ ...fieldInputStyle, resize: 'none', overflow: 'hidden' }}
+    />
+  );
+};
 
 const FieldControl = ({ field, value, onChange }) => {
   if (field.type === 'static') {
@@ -41,14 +67,7 @@ const FieldControl = ({ field, value, onChange }) => {
   }
 
   if (field.type === 'textarea') {
-    return (
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={field.rows ?? 3}
-        style={{ ...fieldInputStyle, resize: 'vertical' }}
-      />
-    );
+    return <AutoGrowTextarea field={field} value={value} onChange={onChange} />;
   }
 
   if (field.type === 'number') {
