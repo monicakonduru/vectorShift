@@ -72,6 +72,8 @@ const editorStyle = {
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
   outline: 'none',
+  borderColor: '#1e3a5f',
+  background: '#060a14',
 };
 
 const selectVariables = (state) => collectAvailableVariables(state.nodes);

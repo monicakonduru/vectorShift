@@ -64,34 +64,17 @@ export const SubmitButton = () => {
         nodes={nodes}
         edges={edges}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          padding: '16px',
-        }}
+      <button
+        type="button"
+        className="pipeline-run-btn"
+        onClick={handleSubmit}
+        disabled={loading}
       >
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={loading}
-          style={{
-            padding: '10px 28px',
-            borderRadius: '8px',
-            border: '1px solid #475569',
-            background: loading ? '#1e293b' : '#334155',
-            color: loading ? '#94a3b8' : '#e2e8f0',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {loading ? 'Analyzing…' : 'Submit'}
-        </button>
-      </div>
+        <span className="pipeline-run-btn__icon" aria-hidden="true">
+          ▶
+        </span>
+        {loading ? 'Analyzing…' : 'Run'}
+      </button>
     </>
   );
 };

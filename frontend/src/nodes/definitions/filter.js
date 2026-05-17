@@ -1,6 +1,7 @@
 export const filter = {
   title: 'Filter',
   variant: 'process',
+  icon: 'filter',
   description: 'Keep rows matching a rule.',
   handles: [
     { type: 'target', position: 'left', id: 'input' },

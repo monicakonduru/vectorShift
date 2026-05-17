@@ -1,6 +1,7 @@
 export const customOutput = {
   title: 'Output',
   variant: 'io',
+  icon: 'output',
   handles: () => [{ type: 'target', position: 'left', id: 'value' }],
   fields: [
     {

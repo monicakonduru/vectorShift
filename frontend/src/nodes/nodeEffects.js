@@ -6,6 +6,9 @@ import {
   isValidJsIdentifier,
   hasCompleteTemplateVariables,
 } from './parseTemplateVariables';
+import { resolveVariableHandleId } from '../pipeline/variableRegistry';
+
+export { resolveVariableHandleId };
 
 const textEdgeSyncTimers = new Map();
 
@@ -22,23 +25,39 @@ export const scheduleTextEdgeSync = (nodeId, text) => {
   );
 };
 
+export const buildVariableProviderHandles = ({ fieldValues }) => {
+  const name = fieldValues?.varName ?? fieldValues?.inputName;
+  const id = resolveVariableHandleId(name);
+  return [{ type: 'source', position: 'right', id, tone: 'success' }];
+};
+
+export const buildSetVariableHandles = ({ fieldValues }) => {
+  const name = fieldValues?.varName;
+  const sourceId = isValidJsIdentifier(name)
+    ? resolveVariableHandleId(name)
+    : 'output';
+  return [
+    { type: 'target', position: 'left', id: 'input', tone: 'input' },
+    { type: 'source', position: 'right', id: sourceId, tone: 'success' },
+  ];
+};
+
 export const buildTextHandles = ({ fieldValues }) => {
   const variables = parseTemplateVariables(fieldValues?.text ?? '');
   const targets = variables.map((name, index) => ({
     type: 'target',
     position: 'left',
     id: name,
+    tone: 'input',
     style: { top: `${((index + 1) / (variables.length + 1)) * 100}%` },
   }));
 
-  return [...targets, { type: 'source', position: 'right', id: 'output' }];
+  return [...targets, { type: 'source', position: 'right', id: 'output', tone: 'success' }];
 };
 
 export const onTextFieldsChange = (id, name, value, fieldValues) => {
   if (name === 'text' || name === '__mount__' || name === '__handles__') {
     const text = name === 'text' ? value : fieldValues?.text ?? '';
-    // Connect immediately when a full {{ var }} exists (dropdown pick / pill insert).
-    // Debounce only while user is still typing a partial {{ ... without closing.
     if (
       name === '__handles__' ||
       name === '__mount__' ||
@@ -51,11 +70,19 @@ export const onTextFieldsChange = (id, name, value, fieldValues) => {
   }
 };
 
-export const resolveInputHandleId = (inputName) =>
-  isValidJsIdentifier(inputName) ? inputName : 'value';
-
-export const onInputFieldsChange = (id, name) => {
-  if (name === 'inputName' || name === '__mount__' || name === '__handles__') {
+export const onProviderFieldsChange = (id, name) => {
+  if (
+    name === 'varName' ||
+    name === 'inputName' ||
+    name === '__mount__' ||
+    name === '__handles__'
+  ) {
     useStore.getState().resyncAllTextVariableEdges();
   }
 };
+
+/** @deprecated Use onProviderFieldsChange */
+export const onInputFieldsChange = onProviderFieldsChange;
+
+/** @deprecated Use resolveVariableHandleId from variableRegistry */
+export const resolveInputHandleId = (inputName) => resolveVariableHandleId(inputName);

@@ -1,85 +1,89 @@
 // Shared node styling — update here to restyle every node at once.
 
 export const NODE_DEFAULTS = {
-  width: 200,
-  minHeight: 80,
+  width: 300,
+  minHeight: 88,
 };
 
-export const nodeContainerStyle = (width, minHeight, variant) => ({
-  width,
-  minHeight,
-  position: 'relative',
-  ...VARIANT_STYLES[variant]?.container,
-});
+export const NODE_COLORS = {
+  bg: '#0b1120',
+  borderDefault: '#334155',
+  borderIo: '#4ade80',
+  borderProcess: '#a855f7',
+  borderUtility: '#64748b',
+  titleIo: '#7dd3fc',
+  titleProcess: '#c4b5fd',
+  titleDefault: '#e2e8f0',
+  titleUtility: '#94a3b8',
+  purple: '#c084fc',
+  green: '#4ade80',
+  gold: '#fbbf24',
+  blue: '#60a5fa',
+  red: '#f87171',
+};
 
 const VARIANT_STYLES = {
   default: {
-    container: {
-      border: '1px solid #334155',
-      borderRadius: '8px',
-      background: '#0f172a',
-      padding: '8px',
-      boxSizing: 'border-box',
-      color: '#e2e8f0',
-      fontSize: '12px',
-    },
-    title: { fontWeight: 600, color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' },
+    containerClass: 'pipeline-node--default',
+    titleClass: 'pipeline-node__title--default',
   },
   io: {
-    container: {
-      border: '1px solid #0369a1',
-      borderRadius: '8px',
-      background: '#082f49',
-      padding: '8px',
-      boxSizing: 'border-box',
-      color: '#e0f2fe',
-      fontSize: '12px',
-    },
-    title: { fontWeight: 600, color: '#7dd3fc', fontSize: '11px', textTransform: 'uppercase' },
+    containerClass: 'pipeline-node--io',
+    titleClass: 'pipeline-node__title--io',
   },
   process: {
-    container: {
-      border: '1px solid #6d28d9',
-      borderRadius: '8px',
-      background: '#1e1b4b',
-      padding: '8px',
-      boxSizing: 'border-box',
-      color: '#ede9fe',
-      fontSize: '12px',
-    },
-    title: { fontWeight: 600, color: '#c4b5fd', fontSize: '11px', textTransform: 'uppercase' },
+    containerClass: 'pipeline-node--process',
+    titleClass: 'pipeline-node__title--process',
   },
   utility: {
-    container: {
-      border: '1px dashed #64748b',
-      borderRadius: '8px',
-      background: '#1e293b',
-      padding: '8px',
-      boxSizing: 'border-box',
-      color: '#cbd5e1',
-      fontSize: '12px',
-    },
-    title: { fontWeight: 600, color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' },
+    containerClass: 'pipeline-node--utility',
+    titleClass: 'pipeline-node__title--utility',
   },
 };
 
-export const getTitleStyle = (variant = 'default') =>
-  VARIANT_STYLES[variant]?.title ?? VARIANT_STYLES.default.title;
+export const nodeContainerStyle = (width, minHeight) => ({
+  width,
+  minHeight,
+  position: 'relative',
+});
+
+export const getVariantClasses = (variant = 'default') =>
+  VARIANT_STYLES[variant] ?? VARIANT_STYLES.default;
+
+/** @deprecated inline styles — prefer CSS classes in index.css */
+export const getTitleStyle = (variant = 'default') => ({
+  fontWeight: 600,
+  margin: 0,
+  fontSize: '13px',
+  letterSpacing: '0.01em',
+  textTransform: 'none',
+  color:
+    variant === 'io'
+      ? NODE_COLORS.titleIo
+      : variant === 'process'
+        ? NODE_COLORS.titleProcess
+        : variant === 'utility'
+          ? NODE_COLORS.titleUtility
+          : NODE_COLORS.titleDefault,
+});
 
 export const fieldLabelStyle = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '2px',
-  marginTop: '6px',
+  gap: '4px',
+  marginTop: '8px',
+  fontSize: '11px',
+  color: NODE_COLORS.purple,
 };
 
 export const fieldInputStyle = {
   width: '100%',
   boxSizing: 'border-box',
-  padding: '4px 6px',
-  borderRadius: '4px',
-  border: '1px solid #475569',
-  background: '#0f172a',
-  color: '#f1f5f9',
+  padding: '6px 8px',
+  borderRadius: '6px',
+  border: '1px solid #1e3a5f',
+  background: '#060a14',
+  color: '#e2e8f0',
   fontSize: '12px',
+  fontFamily: 'var(--font-mono)',
 };

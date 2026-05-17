@@ -1,0 +1,56 @@
+export const retry = {
+  title: 'Retry',
+  variant: 'utility',
+  icon: 'retry',
+  width: 260,
+  minHeight: 100,
+  description: 'Retry the next step on failure (config for the execution engine).',
+  handles: [
+    { type: 'target', position: 'left', id: 'input', tone: 'input' },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'success',
+      label: 'OK',
+      tone: 'success',
+      style: { top: '38%' },
+    },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'exhausted',
+      label: 'Gave up',
+      tone: 'fail',
+      style: { top: '62%' },
+    },
+  ],
+  fields: [
+    {
+      name: 'maxAttempts',
+      label: 'Max attempts',
+      type: 'number',
+      defaultValue: '3',
+      min: 1,
+      max: 10,
+    },
+    {
+      name: 'delayMs',
+      label: 'Delay between (ms)',
+      type: 'number',
+      defaultValue: '1000',
+      min: 0,
+      step: 100,
+    },
+    {
+      name: 'retryOn',
+      label: 'Retry when',
+      type: 'select',
+      defaultValue: '5xx',
+      options: [
+        { value: '5xx', label: 'HTTP 5xx' },
+        { value: 'network', label: 'Network error' },
+        { value: 'both', label: '5xx or network' },
+      ],
+    },
+  ],
+};
