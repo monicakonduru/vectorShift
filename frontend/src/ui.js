@@ -121,14 +121,18 @@ export const PipelineUI = () => {
             nodeColor={(node) => {
               const colors = {
                 customInput: '#f472b6',
+                constant: '#94a3b8',
                 customOutput: '#22d3ee',
                 llm: '#a333ff',
                 text: '#00aaff',
                 filter: '#ffcc00',
                 merge: '#00ff88',
-                delay: '#94a3b8',
                 api: '#00aaff',
-                condition: '#fb923c',
+                setVariable: '#a855f7',
+                transform: '#22d3ee',
+                validate: '#4ade80',
+                retry: '#fbbf24',
+                switch: '#fb923c',
               };
               return colors[node.type] ?? '#64748b';
             }}

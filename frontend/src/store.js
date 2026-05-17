@@ -8,14 +8,20 @@ import {
     MarkerType,
   } from 'reactflow';
 import { variableHandleId, findVariableProviders } from './pipeline/variableEdges';
+import {
+  getVariableNameFromNode,
+  isVariableProvider,
+  resolveVariableHandleId,
+} from './pipeline/variableRegistry';
 import { parseTemplateVariables } from './nodes/parseTemplateVariables';
-import { resolveInputHandleId } from './nodes/nodeEffects';
 
 const EDGE_DEFAULTS = {
   type: 'smoothstep',
   animated: true,
   markerEnd: { type: MarkerType.Arrow, height: '20px', width: '20px' },
 };
+
+const VARIABLE_SYNC_NODE_TYPES = new Set(['customInput', 'constant', 'setVariable', 'text']);
 
 const edgesEqual = (a, b) =>
   a.length === b.length &&
@@ -43,7 +49,7 @@ export const useStore = create((set, get) => ({
         set({
             nodes: [...get().nodes, node]
         });
-        if (node.type === 'customInput' || node.type === 'text') {
+        if (VARIABLE_SYNC_NODE_TYPES.has(node.type)) {
           queueMicrotask(() => get().resyncAllTextVariableEdges());
         }
     },
@@ -96,9 +102,10 @@ export const useStore = create((set, get) => ({
       for (const varName of variableNames) {
         const providers = findVariableProviders(nodes, varName);
         for (const provider of providers) {
+          const handleName = resolveVariableHandleId(getVariableNameFromNode(provider));
           const connection = {
             source: provider.id,
-            sourceHandle: variableHandleId(provider.id, varName),
+            sourceHandle: variableHandleId(provider.id, handleName),
             target: textNodeId,
             targetHandle: variableHandleId(textNodeId, varName),
             ...EDGE_DEFAULTS,
@@ -124,13 +131,13 @@ export const useStore = create((set, get) => ({
       const { nodes, edges } = get();
       const nextEdges = edges.filter((edge) => {
         const provider = nodes.find((node) => node.id === edge.source);
-        if (provider?.type !== 'customInput') return true;
+        if (!isVariableProvider(provider)) return true;
 
         const targetNode = nodes.find((node) => node.id === edge.target);
-        // Only validate variable wiring into Text nodes — keep Input → LLM/Output/etc.
         if (targetNode?.type !== 'text') return true;
 
-        const handleId = resolveInputHandleId(provider.data?.inputName);
+        const varName = getVariableNameFromNode(provider);
+        const handleId = resolveVariableHandleId(varName);
         return edge.sourceHandle === variableHandleId(provider.id, handleId);
       });
       if (!edgesEqual(edges, nextEdges)) {

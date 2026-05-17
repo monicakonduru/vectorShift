@@ -1,16 +1,10 @@
-import { onInputFieldsChange, resolveInputHandleId } from '../nodeEffects';
+import { buildVariableProviderHandles, onProviderFieldsChange } from '../nodeEffects';
 
 export const customInput = {
   title: 'Input',
   variant: 'io',
   icon: 'input',
-  handles: ({ fieldValues }) => [
-    {
-      type: 'source',
-      position: 'right',
-      id: resolveInputHandleId(fieldValues?.inputName),
-    },
-  ],
+  handles: buildVariableProviderHandles,
   fields: [
     {
       name: 'inputName',
@@ -29,5 +23,5 @@ export const customInput = {
       ],
     },
   ],
-  onFieldsChange: onInputFieldsChange,
+  onFieldsChange: onProviderFieldsChange,
 };

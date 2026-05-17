@@ -26,12 +26,26 @@ const getNodeLabel = (node) => {
       return data.pattern ? `${data.rule || 'contains'}: ${truncate(data.pattern, 24)}` : getTypeTitle(node.type);
     case 'merge':
       return data.strategy ? `Strategy: ${data.strategy}` : getTypeTitle(node.type);
-    case 'delay':
-      return data.milliseconds != null ? `${data.milliseconds} ms` : getTypeTitle(node.type);
-    case 'condition':
-      return data.compareTo
-        ? `${data.operator || 'eq'} ${truncate(String(data.compareTo), 20)}`
+    case 'constant':
+      return data.varName ? `${data.varName} = ${truncate(String(data.value ?? ''), 20)}` : getTypeTitle(node.type);
+    case 'setVariable':
+      return data.varName
+        ? `${data.varName} ← ${truncate(data.jsonPath || '$.path', 22)}`
         : getTypeTitle(node.type);
+    case 'transform':
+      return data.template ? truncate(data.template, 28) : getTypeTitle(node.type);
+    case 'validate':
+      return data.requiredFields
+        ? `requires: ${truncate(data.requiredFields, 24)}`
+        : getTypeTitle(node.type);
+    case 'retry':
+      return data.maxAttempts
+        ? `${data.maxAttempts}× @ ${data.delayMs ?? 0}ms`
+        : getTypeTitle(node.type);
+    case 'switch':
+      return data.routeOn === 'field'
+        ? `field: ${truncate(data.fieldPath || '', 20)}`
+        : 'HTTP status routes';
     default:
       return getTypeTitle(node.type);
   }

@@ -3,16 +3,9 @@ import { shallow } from 'zustand/shallow';
 import { useStore } from '../store';
 import { parseTemplateVariables } from './parseTemplateVariables';
 import { formatVariable } from './templateEditor';
+import { resolveVariableValue } from '../pipeline/variableRegistry';
 
 const selectNodes = (state) => state.nodes;
-
-const resolveVariableValue = (nodes, varName) => {
-  const provider = nodes.find(
-    (n) => n.type === 'customInput' && n.data?.inputName === varName
-  );
-  if (!provider) return null;
-  return provider.data?.defaultValue ?? provider.data?.value ?? null;
-};
 
 const JsonPreview = ({ data }) => {
   if (!data || typeof data !== 'object') {

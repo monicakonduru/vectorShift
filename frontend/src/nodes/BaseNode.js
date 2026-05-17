@@ -31,8 +31,12 @@ const NODE_ICONS = {
   text: '¶',
   filter: '⧉',
   merge: '⊕',
-  delay: '◷',
-  condition: '⑂',
+  constant: '◆',
+  setVariable: '⊛',
+  transform: '⤨',
+  validate: '✓',
+  retry: '↻',
+  switch: '⑂',
   default: '●',
 };
 

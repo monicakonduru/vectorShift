@@ -1,38 +1,50 @@
 // Declarative registry — each entry becomes a React Flow node via defineNode.
 
 import { customInput } from './customInput';
+import { constant } from './constant';
 import { llm } from './llm';
 import { customOutput } from './customOutput';
 import { text } from './text';
 import { filter } from './filter';
 import { merge } from './merge';
-import { delay } from './delay';
 import { api } from './api';
-import { condition } from './condition';
+import { setVariable } from './setVariable';
+import { transform } from './transform';
+import { validate } from './validate';
+import { retry } from './retry';
+import { switchNode } from './switch';
 
 export const nodeDefinitions = {
   customInput,
+  constant,
   llm,
   customOutput,
   text,
   filter,
   merge,
-  delay,
   api,
-  condition,
+  setVariable,
+  transform,
+  validate,
+  retry,
+  switch: switchNode,
 };
 
-/** Toolbar display order (labels come from each definition's title). */
+/** Toolbar display order — left-to-right matches typical pipeline build flow. */
 const TOOLBAR_ORDER = [
   'customInput',
-  'llm',
-  'customOutput',
+  'constant',
   'text',
+  'api',
+  'setVariable',
+  'transform',
+  'validate',
+  'switch',
+  'retry',
   'filter',
   'merge',
-  'delay',
-  'api',
-  'condition',
+  'llm',
+  'customOutput',
 ];
 
 export const toolbarNodes = TOOLBAR_ORDER.map((type) => ({

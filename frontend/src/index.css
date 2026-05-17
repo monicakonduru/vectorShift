@@ -151,9 +151,13 @@ input.mono {
 .toolbar-node-btn--text { color: var(--accent-blue); border-color: rgba(0, 170, 255, 0.25); }
 .toolbar-node-btn--filter { color: var(--accent-yellow); border-color: rgba(255, 204, 0, 0.25); }
 .toolbar-node-btn--merge { color: var(--accent-green); border-color: rgba(0, 255, 136, 0.2); }
-.toolbar-node-btn--delay { color: var(--text-primary); border-color: rgba(255, 255, 255, 0.12); }
 .toolbar-node-btn--api { color: var(--accent-blue); border-color: rgba(0, 170, 255, 0.25); }
-.toolbar-node-btn--condition { color: var(--accent-orange); border-color: rgba(251, 146, 60, 0.25); }
+.toolbar-node-btn--constant { color: var(--text-secondary); border-color: rgba(148, 163, 184, 0.25); }
+.toolbar-node-btn--setVariable { color: var(--accent-purple); border-color: rgba(168, 85, 247, 0.25); }
+.toolbar-node-btn--transform { color: var(--accent-cyan); border-color: rgba(34, 211, 238, 0.25); }
+.toolbar-node-btn--validate { color: var(--accent-green); border-color: rgba(74, 222, 128, 0.25); }
+.toolbar-node-btn--retry { color: var(--accent-yellow); border-color: rgba(251, 191, 36, 0.25); }
+.toolbar-node-btn--switch { color: var(--accent-orange); border-color: rgba(251, 146, 60, 0.25); }
 
 /* ── Run / submit button ─────────────────────────────────────── */
 .pipeline-run-btn {
@@ -798,6 +802,17 @@ input.mono {
   background: rgba(127, 29, 29, 0.85);
   color: #fca5a5;
   border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.pipeline-handle-label--warn {
+  background: rgba(120, 53, 15, 0.9);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.pipeline-handle--warn {
+  background: #fbbf24 !important;
+  border-color: #78350f !important;
 }
 
 .pipeline-handle,

@@ -1,0 +1,62 @@
+export const switchNode = {
+  title: 'Switch',
+  variant: 'process',
+  icon: 'switch',
+  width: 300,
+  minHeight: 120,
+  description: 'Route by HTTP status or a field value (replaces Condition).',
+  handles: [
+    { type: 'target', position: 'left', id: 'input', tone: 'input' },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'ok',
+      label: '2xx',
+      tone: 'success',
+      style: { top: '28%' },
+    },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'client',
+      label: '4xx',
+      tone: 'warn',
+      style: { top: '48%' },
+    },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'server',
+      label: '5xx',
+      tone: 'fail',
+      style: { top: '68%' },
+    },
+    {
+      type: 'source',
+      position: 'right',
+      id: 'default',
+      label: 'Else',
+      tone: 'default',
+      style: { top: '88%' },
+    },
+  ],
+  fields: [
+    {
+      name: 'routeOn',
+      label: 'Route on',
+      type: 'select',
+      defaultValue: 'httpStatus',
+      options: [
+        { value: 'httpStatus', label: 'HTTP status code' },
+        { value: 'field', label: 'JSON field' },
+      ],
+    },
+    {
+      name: 'fieldPath',
+      label: 'Field path (if routing on field)',
+      type: 'text',
+      defaultValue: 'statusCode',
+      placeholder: 'statusCode or $.error.code',
+    },
+  ],
+};
